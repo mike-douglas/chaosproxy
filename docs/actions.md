@@ -6,8 +6,8 @@ Below is a list of the available actions you can use to configure Chaos Proxy. S
 
 Sleep for _n_ seconds before continuing to process the request.
 
-Action name: `sleep`
-Params: `seconds (int)`
+* Action name: `sleep`
+* Params: `seconds (int)`
 
 Example:
 ```yaml
@@ -20,8 +20,8 @@ params:
 
 Sleep for a random interval between _n_ and _m_ seconds before continuing to process the request.
 
-Action name: `sleeprand`
-Params: `from (int); to (int)`
+* Action name: `sleeprand`
+* Params: `from (int); to (int)`
 
 Example:
 ```yaml
@@ -35,8 +35,8 @@ params:
 
 Return an HTTP error with a custom message.
 
-Action name: `httperror`
-Params: `code (int); status (str)`
+* Action name: `httperror`
+* Params: `code (int); status (str)`
 
 Example:
 ```yaml
