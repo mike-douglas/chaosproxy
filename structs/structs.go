@@ -25,7 +25,7 @@ type RouteConfig struct {
 }
 
 func (rc RouteConfig) String() string {
-	return fmt.Sprintf("Route(Handler=%v; Pattern=%v; Middleware=%v)", rc.Handler, rc.CompiledPattern, rc.Middleware)
+	return fmt.Sprintf("Route(Pattern=%v; Middleware=%v)", rc.CompiledPattern, rc.Middleware)
 }
 
 // MiddlewareConfig ...

@@ -19,6 +19,8 @@ func GetMiddlewareFunction(action string) func(structs.MiddlewareConfig, http.Ha
 		return sleepMiddleware
 	case "randsleep":
 		return randomSleepMiddleware
+	case "httperror":
+		return errorMiddleware
 	case "noop":
 		return noopMiddleware
 	default:
@@ -29,7 +31,7 @@ func GetMiddlewareFunction(action string) func(structs.MiddlewareConfig, http.Ha
 // CreateHandler creates a single handler for handling proxied requests
 func CreateHandler(middleware []structs.MiddlewareConfig) http.Handler {
 	var handler http.Handler
-	firstMiddleware := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	lastMiddleware := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if url, ok := url.Parse(r.RequestURI); ok == nil {
 			httputil.NewSingleHostReverseProxy(url).ServeHTTP(w, r)
 		} else {
@@ -40,7 +42,7 @@ func CreateHandler(middleware []structs.MiddlewareConfig) http.Handler {
 	for i, c := range middleware {
 		mw := GetMiddlewareFunction(c.Action)
 		if i == 0 {
-			handler = mw(c, firstMiddleware)
+			handler = mw(c, lastMiddleware)
 		} else {
 			handler = mw(c, handler)
 		}
@@ -51,8 +53,23 @@ func CreateHandler(middleware []structs.MiddlewareConfig) http.Handler {
 
 func noopMiddleware(c structs.MiddlewareConfig, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Noop")
+		fmt.Println(c)
 		next.ServeHTTP(w, r)
+	})
+}
+
+func errorMiddleware(c structs.MiddlewareConfig, next http.Handler) http.Handler {
+	httpError, err := strconv.Atoi(c.Params["code"])
+
+	if err != nil {
+		// Error
+	}
+
+	httpMessage := c.Params["status"]
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(c)
+		http.Error(w, httpMessage, httpError)
 	})
 }
 
@@ -64,7 +81,7 @@ func sleepMiddleware(c structs.MiddlewareConfig, next http.Handler) http.Handler
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Sleeeeeep...")
+		fmt.Println(c)
 		time.Sleep(time.Duration(seconds) * 1000 * time.Millisecond)
 		next.ServeHTTP(w, r)
 	})
@@ -83,10 +100,9 @@ func randomSleepMiddleware(c structs.MiddlewareConfig, next http.Handler) http.H
 		// Dieeee
 	}
 
-	randomSleep := time.Duration(rand.Intn(to)+from) * 1000 * time.Millisecond
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Random Sleep %v...\n", randomSleep)
-		time.Sleep(randomSleep)
+		fmt.Println(c)
+		time.Sleep(time.Duration(rand.Intn(to)+from) * 1000 * time.Millisecond)
 		next.ServeHTTP(w, r)
 	})
 }

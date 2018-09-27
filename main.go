@@ -16,7 +16,9 @@ import (
 
 func buildHandlerFromConfig(config *structs.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Request: %s\n", r.RequestURI)
+		if config.Verbose {
+			fmt.Printf("Request: %v\n", r)
+		}
 
 		if url, err := url.Parse(r.RequestURI); err == nil {
 			for _, route := range config.Routes {
@@ -52,7 +54,11 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/", buildHandlerFromConfig(&c))
+	r.HandleFunc("/", buildHandlerFromConfig(&c)).Methods("POST", "GET", "PUT", "PATCH", "DELETE")
+
+	if c.Verbose {
+		fmt.Println(c)
+	}
 
 	fmt.Printf("Listening on %s\n", ":8080")
 	http.ListenAndServe(":8080", handlers.LoggingHandler(os.Stdout, r))

@@ -2,4 +2,13 @@
   actions:
     - name: sleep
       params:
-        seconds: 4
+        seconds: 2
+    - name: sleep
+      params:
+        seconds: 2
+- pattern: google.com
+  actions:
+    - name: httperror
+      params:
+        code: 500
+        status: "Timeout, Byeee"
