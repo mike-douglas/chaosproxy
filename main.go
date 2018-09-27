@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -36,7 +37,11 @@ func buildHandlerFromConfig(config *structs.Config) http.HandlerFunc {
 }
 
 func main() {
-	d, err := ioutil.ReadFile("test_config.yaml")
+	f := flag.String("config", "", "Configuration YAML file for proxy")
+
+	flag.Parse()
+
+	d, err := ioutil.ReadFile(*f)
 
 	if err != nil {
 		panic(err)
