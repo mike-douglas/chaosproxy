@@ -12,20 +12,28 @@ type Config struct {
 	Routes  []RouteConfig
 }
 
+func (c Config) String() string {
+	return fmt.Sprintf("Config(Verbose=%v; Routes=%v", c.Verbose, c.Routes)
+}
+
 // RouteConfig ...
 type RouteConfig struct {
-	Pattern         string             `yaml:"pattern"`
-	Middleware      []MiddlewareConfig `yaml:"actions"`
+	Pattern         string
+	Middleware      []MiddlewareConfig
 	CompiledPattern *regexp.Regexp
 	Handler         http.Handler
 }
 
-func (rc *RouteConfig) String() string {
-	return fmt.Sprintf("Route (Handler: %v; Pattern: %v)", rc.Handler, rc.CompiledPattern)
+func (rc RouteConfig) String() string {
+	return fmt.Sprintf("Route(Handler=%v; Pattern=%v; Middleware=%v)", rc.Handler, rc.CompiledPattern, rc.Middleware)
 }
 
 // MiddlewareConfig ...
 type MiddlewareConfig struct {
-	Action string            `yaml:"name"`
-	Params map[string]string `yaml:"params"`
+	Action string
+	Params map[string]string
+}
+
+func (mw MiddlewareConfig) String() string {
+	return fmt.Sprintf("Middleware(Action=%v; Params=%v)", mw.Action, mw.Params)
 }

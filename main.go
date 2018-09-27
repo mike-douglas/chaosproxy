@@ -34,8 +34,6 @@ func buildHandlerFromConfig(config *structs.Config) http.HandlerFunc {
 }
 
 func main() {
-	// c, _ := config.BuildConfig()
-
 	d, err := ioutil.ReadFile("test_config.yaml")
 
 	if err != nil {

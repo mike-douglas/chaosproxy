@@ -1,5 +1,5 @@
 - pattern: abmcscholar.gov
   actions:
     - name: sleep
-    - name: noop
-    - name: sleep
+      params:
+        seconds: 4
