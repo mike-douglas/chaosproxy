@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -19,6 +20,7 @@ func buildHandlerFromConfig(config *structs.Config) http.HandlerFunc {
 
 		if url, err := url.Parse(r.RequestURI); err == nil {
 			for _, route := range config.Routes {
+				fmt.Printf("%v\n", route)
 				if route.CompiledPattern.MatchString(url.String()) {
 					route.Handler.ServeHTTP(w, r)
 					return
@@ -32,7 +34,19 @@ func buildHandlerFromConfig(config *structs.Config) http.HandlerFunc {
 }
 
 func main() {
-	c, err := config.BuildConfig()
+	// c, _ := config.BuildConfig()
+
+	d, err := ioutil.ReadFile("test_config.yaml")
+
+	if err != nil {
+		panic(err)
+	}
+
+	var c = structs.Config{
+		Verbose: true,
+	}
+
+	err = config.BuildFromYaml(d, &c)
 
 	if err != nil {
 		panic(err)
@@ -40,7 +54,7 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/", buildHandlerFromConfig(c))
+	r.HandleFunc("/", buildHandlerFromConfig(&c))
 
 	fmt.Printf("Listening on %s\n", ":8080")
 	http.ListenAndServe(":8080", handlers.LoggingHandler(os.Stdout, r))

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -13,20 +14,7 @@ import (
 
 // BuildConfig ...
 func BuildConfig() (*structs.Config, error) {
-	route, err := buildRouteConfig()
-
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not build config")
-	}
-
-	return &structs.Config{
-		Verbose: false,
-		Routes:  []structs.RouteConfig{*route},
-	}, nil
-}
-
-func buildRouteConfig() (*structs.RouteConfig, error) {
-	route := structs.RouteConfig{
+	var route = structs.RouteConfig{
 		Pattern: "abmcscholar.gov",
 		Middleware: []structs.MiddlewareConfig{
 			{Action: "sleep", Params: map[string]string{"seconds": "1"}},
@@ -35,10 +23,23 @@ func buildRouteConfig() (*structs.RouteConfig, error) {
 		},
 	}
 
-	if r, err := regexp.Compile(route.Pattern); err == nil {
-		route.CompiledPattern = r
+	err := buildRouteConfig(&route)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not build config")
+	}
+
+	return &structs.Config{
+		Verbose: false,
+		Routes:  []structs.RouteConfig{route},
+	}, nil
+}
+
+func buildRouteConfig(route *structs.RouteConfig) error {
+	if r, ok := regexp.Compile(route.Pattern); ok == nil {
+		route.CompiledPattern = r.Copy()
 	} else {
-		return nil, errors.Wrap(err, "Could not compile route pattern")
+		return errors.Wrap(ok, "Could not compile route pattern")
 	}
 
 	var handler http.Handler
@@ -61,5 +62,7 @@ func buildRouteConfig() (*structs.RouteConfig, error) {
 
 	route.Handler = handler
 
-	return &route, nil
+	fmt.Printf("%v\n", route)
+
+	return nil
 }

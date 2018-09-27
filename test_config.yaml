@@ -1,0 +1,5 @@
+- pattern: abmcscholar.gov
+  actions:
+    - name: sleep
+    - name: noop
+    - name: sleep

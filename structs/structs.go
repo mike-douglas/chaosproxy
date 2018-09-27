@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 )
@@ -13,14 +14,18 @@ type Config struct {
 
 // RouteConfig ...
 type RouteConfig struct {
-	Pattern         string
-	Middleware      []MiddlewareConfig
+	Pattern         string             `yaml:"pattern"`
+	Middleware      []MiddlewareConfig `yaml:"actions"`
 	CompiledPattern *regexp.Regexp
 	Handler         http.Handler
 }
 
+func (rc *RouteConfig) String() string {
+	return fmt.Sprintf("Route (Handler: %v; Pattern: %v)", rc.Handler, rc.CompiledPattern)
+}
+
 // MiddlewareConfig ...
 type MiddlewareConfig struct {
-	Action string
-	Params map[string]string
+	Action string            `yaml:"name"`
+	Params map[string]string `yaml:"params"`
 }
