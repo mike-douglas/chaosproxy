@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 
+	"github.com/kr/mitm"
+
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/mike-douglas/chaosproxy/config"
 	"github.com/mike-douglas/chaosproxy/structs"
 )
 
-func buildHandlerFromConfig(config *structs.Config) http.HandlerFunc {
+func buildHandlerFromConfig(config *structs.Config, upstream http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if config.Verbose {
 			fmt.Printf("Request: %v\n", r)
@@ -29,7 +29,7 @@ func buildHandlerFromConfig(config *structs.Config) http.HandlerFunc {
 					return
 				}
 			}
-			httputil.NewSingleHostReverseProxy(url).ServeHTTP(w, r)
+			upstream.ServeHTTP(w, r)
 		} else {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 		}
@@ -57,14 +57,17 @@ func main() {
 		panic(err)
 	}
 
-	r := mux.NewRouter()
-
-	r.HandleFunc("/", buildHandlerFromConfig(&c)).Methods("POST", "GET", "PUT", "PATCH", "DELETE")
+	p := &mitm.Proxy{
+		CA: nil,
+		Wrap: func(upstream http.Handler) http.Handler {
+			return buildHandlerFromConfig(&c, upstream)
+		},
+	}
 
 	if c.Verbose {
 		fmt.Println(c)
 	}
 
 	fmt.Printf("Listening on %s\n", ":8080")
-	http.ListenAndServe(":8080", handlers.LoggingHandler(os.Stdout, r))
+	http.ListenAndServe(":8080", handlers.LoggingHandler(os.Stdout, p))
 }
