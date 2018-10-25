@@ -1,16 +1,17 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/kr/mitm"
 
-	"github.com/gorilla/handlers"
 	"github.com/mike-douglas/chaosproxy/config"
 	"github.com/mike-douglas/chaosproxy/structs"
 )
@@ -22,14 +23,19 @@ func buildHandlerFromConfig(config *structs.Config, upstream http.Handler) http.
 		}
 
 		if url, err := url.Parse(r.RequestURI); err == nil {
-			for _, route := range config.Routes {
-				fmt.Printf("%v\n", route)
-				if route.CompiledPattern.MatchString(url.String()) {
-					route.Handler.ServeHTTP(w, r)
-					return
+			if strings.ToLower(url.Scheme) == "https" {
+				// Skip HTTPs processing for now...
+				upstream.ServeHTTP(w, r)
+			} else {
+				for _, route := range config.Routes {
+					fmt.Printf("%v\n", route)
+					if route.CompiledPattern.MatchString(url.String()) {
+						route.Handler.ServeHTTP(w, r)
+						return
+					}
 				}
+				upstream.ServeHTTP(w, r)
 			}
-			upstream.ServeHTTP(w, r)
 		} else {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 		}
@@ -38,6 +44,9 @@ func buildHandlerFromConfig(config *structs.Config, upstream http.Handler) http.
 
 func main() {
 	f := flag.String("config", "", "Configuration YAML file for proxy")
+	p := flag.Int("port", 8080, "The port to listen on")
+	pem := flag.String("pem", "", "SSL Cert")
+	key := flag.String("key", "", "SSL Key")
 
 	flag.Parse()
 
@@ -57,8 +66,18 @@ func main() {
 		panic(err)
 	}
 
-	p := &mitm.Proxy{
-		CA: nil,
+	cert, err := tls.LoadX509KeyPair(*pem, *key)
+
+	if err != nil {
+		panic(err)
+	}
+
+	proxy := &mitm.Proxy{
+		CA: &cert,
+		TLSClientConfig: &tls.Config{
+			KeyLogWriter:       os.Stdout,
+			InsecureSkipVerify: true,
+		},
 		Wrap: func(upstream http.Handler) http.Handler {
 			return buildHandlerFromConfig(&c, upstream)
 		},
@@ -68,6 +87,6 @@ func main() {
 		fmt.Println(c)
 	}
 
-	fmt.Printf("Listening on %s\n", ":8080")
-	http.ListenAndServe(":8080", handlers.LoggingHandler(os.Stdout, p))
+	fmt.Printf("Port = %d\nSSL cert = %s\nSSL key = %s\n", *p, *pem, *key)
+	http.ListenAndServe(fmt.Sprintf(":%d", *p), proxy)
 }

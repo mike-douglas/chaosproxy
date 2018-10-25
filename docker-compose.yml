@@ -1,0 +1,25 @@
+version: "3"
+services:
+###################
+# Operations
+###################
+  chaosproxy:
+    container_name: chaosproxy
+    image: chaosproxy:latest
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    volumes:
+      - ./test_config.yaml:/chaosproxy.yaml
+
+  chaosproxy-ssl:
+    container_name: chaosproxy-ssl
+    image: chaosproxy:latest
+    restart: unless-stopped
+    ports:
+      - 8081:8080
+    volumes:
+      - ./test_config.yaml:/chaosproxy.yaml
+      - ./server.pem:/server.pem
+      - ./server.key:/server.key
+    command: -pem /server.pem -key /server.key

@@ -9,7 +9,7 @@ RUN wget -O -  https://raw.githubusercontent.com/golang/dep/master/install.sh | 
 RUN dep ensure
 RUN go build -o proxy .
 
-VOLUME ["/chaosproxy.yaml"]
+VOLUME ["/chaosproxy.yaml", "/server.pem", "/server.key"]
 EXPOSE 8080
 
-CMD ["./proxy", "-config", "/chaosproxy.yaml"]
+ENTRYPOINT [ "./proxy", "-config", "/chaosproxy.yaml", "-port", "8080"]
