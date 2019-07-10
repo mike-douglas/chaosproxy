@@ -1,4 +1,4 @@
-FROM golang:1.10.0-alpine3.7
+FROM golang:1.12-alpine3.9
 
 WORKDIR /go/src/github.com/mike-douglas/chaosproxy
 
